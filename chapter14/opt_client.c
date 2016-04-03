@@ -71,6 +71,11 @@ int main(int argc, const char *argv[])
     fd_set fd_wt;
     maxp1 = sockfd +1; 
     char* buf = fgets(in_buf, MAXLINE, stdin);
+    struct timeval rwtv;
+    rwtv.tv_sec = 5;
+    rwtv.tv_usec = 0;
+    Setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &rwtv, sizeof(rwtv));
+    Setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &rwtv, sizeof(rwtv));
 
     while(buf != NULL)
     {
