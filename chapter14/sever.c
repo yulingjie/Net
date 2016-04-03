@@ -51,7 +51,10 @@ int main(int argc, const char *argv[])
     int n = 0;
     while((n = read(sockfd, recv_buf, MAXLINE)) > 0)
     {
+        fprintf(stdout, "receive buf %s\n", recv_buf);
         write(sockfd, recv_buf, strlen(recv_buf));
+        fprintf(stdout, "after write\n");
+        bzero(recv_buf, MAXLINE);
     }
     return 0;
 }
