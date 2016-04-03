@@ -1,5 +1,8 @@
 #include <unp.h>
-
+void signal_alarm(int signu )
+{
+    return;
+}
 int main(int argc, const char *argv[])
 {
    int sockfd;
@@ -21,24 +24,30 @@ int main(int argc, const char *argv[])
        err_msg("error, get addrinfo %s", tips);
        exit(-1);
    }
-    struct addrinfo * ai = res;    
-    while(ai != NULL)
-    {
-        sockfd = Socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-        int result = connect(sockfd, ai->ai_addr, ai->ai_addrlen);
-        if(result == 0)
-        { // success
-            break;
-        }
-        else if(result < 0)
-        {
-            ai = ai->ai_next;
-            if(errno == EINTR)
-            {
-                err_msg("time out");
-            }
-        }
-    }
+  Sigfunc * sigfunc = Signal(SIGALRM, signal_alarm); 
+   struct addrinfo * ai = res;    
+   while(ai != NULL)
+   {
+       alarm(10);
+       sockfd = Socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+       int result = connect(sockfd, ai->ai_addr, ai->ai_addrlen);
+       if(result == 0)
+       { // success
+           fprintf(stdout, "connect success");
+           fflush(stdout);
+           break;
+       }
+       else if(result < 0)
+       {
+           ai = ai->ai_next;
+           if(errno == EINTR)
+           {
+               err_msg("time out");
+           }
+       }
+   }
+   alarm(0);
+   Signal(SIGALRM, sigfunc);
     char in_buf[MAXLINE];
     char recv_buf[MAXLINE];
     bzero(recv_buf, MAXLINE);
@@ -46,6 +55,7 @@ int main(int argc, const char *argv[])
     while(fgets(in_buf, MAXLINE, stdin) != NULL)
     {
         write(sockfd, in_buf, strlen(in_buf));
+        bzero(recv_buf, MAXLINE);
         read(sockfd, recv_buf, MAXLINE);
         fprintf(stdout, "%s \n", recv_buf);
     }
