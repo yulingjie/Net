@@ -34,13 +34,12 @@ struct ifi_info * get_ifi_info(int family, int doaliases)
     ifipnext = & ifihead;
     lastname[0] = 0;
     sdlname = NULL;
-
     for(ptr = buf; ptr < buf + ifc.ifc_len;){
         ifr = (struct ifreq*)ptr;
 #ifdef HAVE_SOCKADDR_SA_LEN
-        len = max(sizeof(struct sockaddr), ifr->ifr_addr.sa_len);
+        len = max(sizeof(struct sockaddr), ifr->ifr_addr.sa_len) + IFNAMSIZ;
 #else
-        switch(ifr->ifr_addr.sa_family){
+        /*switch(ifr->ifr_addr.sa_family){
 #ifdef IPV6
             case AF_INET6:
                 len = sizeof(struct sockaddr_in6);
@@ -50,9 +49,15 @@ struct ifi_info * get_ifi_info(int family, int doaliases)
             default:
                 len = sizeof(struct sockaddr);
                 break;
-        }
+        }*/
+        len = sizeof(*ifr);
 #endif
-        ptr += sizeof(ifr->ifr_name) + len;
+//#ifndef linux
+        //len = IFNAMSIZ + ifreq->ifr_addr.sa_len;
+//#else
+        //len = sizeof *ifr;
+//#endif
+        ptr += len ; 
 #ifdef HAVE_SOCKADDR_DL_STRUCT
         if(ifr->ifr_addr.sa_family == AF_LINK)
         {
@@ -114,7 +119,7 @@ struct ifi_info * get_ifi_info(int family, int doaliases)
                     ioctl(sockfd, SIOCGIFBRDADDR,&ifrcopy);
                     sinptr = (struct sockaddr_in*) &ifrcopy.ifr_broadaddr;
                     ifi->ifi_brdaddr = Calloc(1, sizeof(struct sockaddr_in));
-                    memcpy(ifi->ifi_dstaddr, sinptr, sizeof(struct sockaddr_in));
+                    memcpy(ifi->ifi_brdaddr, sinptr, sizeof(struct sockaddr_in));
                 }
 #endif
                 break;
@@ -137,6 +142,13 @@ struct ifi_info * get_ifi_info(int family, int doaliases)
                 break;
         }
     }
+/*
+    for(ptr = buf; ptr < buf + ifc.ifc_len;){
+        ifr = (struct ifreq*)ptr;
+       // ptr += sizeof(ifr->ifr_name) + len;
+       ptr += sizeof(ifr);
+   }
+    */
     free(buf);
     return ifihead;
 }
